@@ -50,10 +50,10 @@
        <tr>
          <th>Sr No</th>
          <th>Item ID</th>
+         <th>Item Addition History</th>
          <th>Total Items</th>
          <th>Items Used</th>
          <th>Item Usage History</th>
-         <th>Item Addition History</th>
        </tr>
      </thead>
      <tbody id="inventoryTable">
@@ -95,7 +95,7 @@
            quantity: itemQuantity,
            used: 0,
            history: [],
-           additionHistory: [`${additionDate.toLocaleString()}: Added ${itemQuantity} items`],
+           additionHistory: [`${additionDate.toLocaleDateString()}: Added ${itemQuantity} items`],
          };
          inventory.push(newItem);
          updateItemDropdown();
@@ -120,7 +120,7 @@
          if (useItemQuantity <= item.quantity) {
            item.quantity -= useItemQuantity;
            item.used += useItemQuantity;
-           item.history.push(`${new Date().toLocaleString()}: ${useItemDescription}: Used ${useItemQuantity} items`);
+           item.history.push(`${new Date().toLocaleDateString()}: ${useItemDescription}: Used ${useItemQuantity} items`);
            updateTable();
          } else {
            alert("Error: Trying to use more items than available.");
@@ -149,6 +149,11 @@
          row.innerHTML = `
            <td>${index + 1}</td>
            <td>${item.name}</td>
+           <td>
+             <ul>
+               ${item.additionHistory.map(entry => `<li>${entry}</li>`).join('')}
+             </ul>
+           </td>
            <td>${item.quantity}</td>
            <td>${item.used}</td>
            <td>
@@ -156,11 +161,7 @@
                ${item.history.map(entry => `<li>${entry}</li>`).join('')}
              </ul>
            </td>
-           <td>
-             <ul>
-               ${item.additionHistory.map(entry => `<li>${entry}</li>`).join('')}
-             </ul>
-           </td>
+           
          `;
          tableBody.appendChild(row);
        });

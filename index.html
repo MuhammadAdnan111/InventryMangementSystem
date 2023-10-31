@@ -1,0 +1,175 @@
+
+ <!DOCTYPE html>
+ <html>
+ <head>
+   <title>Inventory Management System</title>
+   <style>
+     table {
+       border-collapse: collapse;
+       width: 80%;
+       margin: 20px auto;
+     }
+     table, th, td {
+       border: 1px solid black;
+     }
+     th, td {
+       padding: 10px;
+       text-align: left;
+     }
+     form {
+       width: 80%;
+       margin: 20px auto;
+     }
+   </style>
+ </head>
+ <body>
+   <h1>Consumable Inventory Of FBR DC SITE -A  Power Team </h1>
+   
+   <form id="inventoryForm">
+     <label for="itemName">Item Name:</label>
+     <input type="text" id="itemName" required>
+     <label for="additionDate">Addition Date:</label>
+     <input type="date" id="additionDate">
+     <label for="itemQuantity">Quantity:</label>
+     <input type="number" id="itemQuantity" required>
+     <button type="button" onclick="addItem()">Add Item</button>
+   </form>
+ 
+   <form id="useItemForm">
+     <label for="useItemName">Item Name:</label>
+     <select id="useItemName"></select>
+     <label for="useItemQuantity">Quantity:</label>
+     <input type="number" id="useItemQuantity" required>
+     <label for="useItemDescription">Description:</label>
+     <input type="text" id="useItemDescription" required>
+     <button type="button" onclick="useItem()">Use Item</button>
+   </form>
+ 
+   <table>
+     <thead>
+       <tr>
+         <th>Sr No</th>
+         <th>Item ID</th>
+         <th>Total Items</th>
+         <th>Items Used</th>
+         <th>Item Usage History</th>
+         <th>Item Addition History</th>
+       </tr>
+     </thead>
+     <tbody id="inventoryTable">
+     </tbody>
+   </table>
+ 
+   <script>
+     let inventory = JSON.parse(localStorage.getItem("inventory")) || [];
+ 
+     function addItem() {
+       const itemName = document.getElementById("itemName").value;
+       const additionDate = new Date(document.getElementById("additionDate").value);
+       const itemQuantity = parseInt(document.getElementById("itemQuantity").value);
+ 
+       if (!itemName || isNaN(itemQuantity) || itemQuantity < 0 || isNaN(additionDate.getTime())) {
+         alert("Invalid input. Please provide a valid item name, addition date, and quantity.");
+         return;
+       }
+ 
+       const existingItem = inventory.find(item => item.name === itemName);
+       if (existingItem) {
+         const previousQuantity = existingItem.quantity;
+ 
+         const formattedNewDate = additionDate.toLocaleString();
+         const oldAdditionDate = existingItem.additionHistory[0];
+         existingItem.additionHistory[0] = `${formattedNewDate}: Added ${existingItem.quantity} items`;
+         existingItem.additionHistory.push(`${formattedNewDate}: Added ${itemQuantity} items`);
+ 
+         existingItem.quantity += itemQuantity;
+ 
+         if (oldAdditionDate) {
+           existingItem.additionHistory[0] = oldAdditionDate;
+         }
+ 
+         updateTable();
+       } else {
+         const newItem = {
+           name: itemName,
+           quantity: itemQuantity,
+           used: 0,
+           history: [],
+           additionHistory: [`${additionDate.toLocaleString()}: Added ${itemQuantity} items`],
+         };
+         inventory.push(newItem);
+         updateItemDropdown();
+         updateTable();
+       }
+ 
+       localStorage.setItem("inventory", JSON.stringify(inventory));
+     }
+ 
+     function useItem() {
+       const useItemName = document.getElementById("useItemName").value;
+       const useItemQuantity = parseInt(document.getElementById("useItemQuantity").value);
+       const useItemDescription = document.getElementById("useItemDescription").value;
+       
+       if (useItemQuantity < 0) {
+         alert("Invalid input. Please provide a valid quantity.");
+         return;
+       }
+       
+       const item = inventory.find(item => item.name === useItemName);
+       if (item) {
+         if (useItemQuantity <= item.quantity) {
+           item.quantity -= useItemQuantity;
+           item.used += useItemQuantity;
+           item.history.push(`${new Date().toLocaleString()}: ${useItemDescription}: Used ${useItemQuantity} items`);
+           updateTable();
+         } else {
+           alert("Error: Trying to use more items than available.");
+         }
+       }
+ 
+       localStorage.setItem("inventory", JSON.stringify(inventory));
+     }
+ 
+     function updateItemDropdown() {
+       const useItemName = document.getElementById("useItemName");
+       useItemName.innerHTML = "";
+       inventory.forEach(item => {
+         const option = document.createElement("option");
+         option.value = item.name;
+         option.text = item.name;
+         useItemName.appendChild(option);
+       });
+     }
+ 
+     function updateTable() {
+       const tableBody = document.getElementById("inventoryTable");
+       tableBody.innerHTML = "";
+       inventory.forEach((item, index) => {
+         const row = document.createElement("tr");
+         row.innerHTML = `
+           <td>${index + 1}</td>
+           <td>${item.name}</td>
+           <td>${item.quantity}</td>
+           <td>${item.used}</td>
+           <td>
+             <ul>
+               ${item.history.map(entry => `<li>${entry}</li>`).join('')}
+             </ul>
+           </td>
+           <td>
+             <ul>
+               ${item.additionHistory.map(entry => `<li>${entry}</li>`).join('')}
+             </ul>
+           </td>
+         `;
+         tableBody.appendChild(row);
+       });
+     }
+ 
+     addItem();
+     updateItemDropdown();
+     updateTable();
+   </script>
+ </body>
+ </html>
+ 
